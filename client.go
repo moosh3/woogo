@@ -18,7 +18,7 @@ var (
 	// ConsumerSecret WooCommerce API Consumer secret
 	ConsumerSecret = os.Getenv("consumer_secret")
 	// Version API Version
-	Version = "wc/v2"
+	Version = "wc/v2/"
 	// QueryStringAuth API Auth string
 	QueryStringAuth = true
 	// WpAPI API connection
@@ -48,14 +48,14 @@ type Client struct {
 }
 
 // NewClient returns a new instance of the Client struct
-func NewClient(wp, auth bool, urlPath, v, q, ck, cs string) *Client {
-	domain, err := url.Parse(urlPath)
+func NewClient(domainURL, ck, cs string) *Client {
+	domain, err := url.Parse(domainURL)
 	if err != nil {
 		panic(err)
 	}
+	domain.Path = "/wp-json/wc/v2/"
 	c := &Client{Client: &http.Client{},
 		Domain: domain, ck: ck, cs: cs,
-		wp: wp, v: v, q: q,
 	}
 	return c
 }
