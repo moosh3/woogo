@@ -17,14 +17,9 @@ func main() {
   var domain = "woocommerce.com"
   client := woogo.NewClient(domain)
 
-  req := client.Get("products")
-  var body []byte
-  decoder := json.NewDecoder(req)
-  err := decoder.Decode(&body)
-  if err != nil {
-    panic(err)
-  }
-  defer body.Close()
-
+  patient, err := client.Get("products", profileID)
+  err := jsonparser.EachKey(func() {
+          /* ... */
+         })
   fmt.Printf("Product list: %s", body.Text)
 }
