@@ -1,25 +1,31 @@
 # woogo
 
+[![GoDoc](https://godoc.org/github.com/aleccunningham/woogo?status.svg)](https://godoc.org/github.com/aleccunningham/woogo)
+
 ![Imgur](https://i.imgur.com/5KVjCyft.jpg)
 
-A WooCommerce API in Golang! Example usage:
+A WooCommerce API in Golang
+
+## Usage
 
 ```Go
-package main
+import "github.com/aleccunningham/woogo"
+```
 
-import (
-  "fmt"
+Construct a new WooCommerce client, and the use the various functions to access data. For example:
 
-  "github.com/aleccunningham/woogo"
-)
+```Go
+client := woogo.NewClient(ctx, "storename.com")
 
-func main() {
-  var domain = "woocommerce.com"
-  client := woogo.NewClient(domain)
-
-  patient, err := client.Get("products", profileID)
-  err := jsonparser.EachKey(func() {
-          /* ... */
-         })
-  fmt.Printf("Product list: %s", body.Text)
+// list all product info for <product_id>
+products, _, err := client.Products.ListByID(ctx, "65", nil)
 }
+```
+
+## Authentication
+
+`woogo` includes functionality to generate URLs signed via an oauth token to authenticate with the API. You will need to export the following environment variables with their key values from a generated token on WooCommerce's website. Alternatively you can c/p them into the library itself.
+
+`export DOMAIN=`
+`export CONSUMER_KEY=`
+`export CONSUMER_SECRET=`
