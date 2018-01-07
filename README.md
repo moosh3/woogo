@@ -2,8 +2,6 @@
 
 [![GoDoc](https://godoc.org/github.com/aleccunningham/woogo?status.svg)](https://godoc.org/github.com/aleccunningham/woogo)
 
-![Imgur](https://i.imgur.com/5KVjCyft.jpg)
-
 A WooCommerce API in Golang
 
 ## Usage
@@ -26,6 +24,8 @@ products, _, err := client.Products.ListByID(ctx, "65", nil)
 
 `woogo` includes functionality to generate URLs signed via an oauth token to authenticate with the API. You will need to export the following environment variables with their key values from a generated token on WooCommerce's website. Alternatively you can c/p them into the library itself.
 
-`export DOMAIN=`
-`export CONSUMER_KEY=`
-`export CONSUMER_SECRET=`
+```
+$ export DOMAIN=
+$ export CONSUMER_KEY=
+$ export CONSUMER_SECRET=
+```
