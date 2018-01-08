@@ -13,6 +13,12 @@ import (
 	"time"
 )
 
+var authURL = "?" + "oauth_consumer_key=" + p.Get("ck") + "&oauth_nonce=" + p.Get("nonce") + "&oauth_signature=" + url.QueryEscape(signature) + "&oauth_signature_method=" + p.Get("sig_method") + "&oauth_timestamp=" + p.Get("timestamp")
+
+func parseURL(path, signature, params) string {
+	return nil
+}
+
 // OAuthSignature returns a signature and oauth parameters
 func OAuthSignature(ConsumerKey, ConsumerSecret, Method, RequestURL string) (string, *url.Values) {
 	hash := "HMAC-SHA256"
