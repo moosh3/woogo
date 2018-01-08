@@ -25,16 +25,6 @@ var (
 	WpAPI = true
 )
 
-// WooCommerceService defines an interfaces for interacting with
-// the WooCommerce API
-type WooCommerceService interface {
-	Get(Path string, Params *url.Values) io.ReadCloser
-	Post(Path string, Data interface{}) io.ReadCloser
-	Put(Path string, Data interface{}) io.ReadCloser
-	Delete(Path string, Params *url.Values) io.ReadCloser
-	Patch(Path string, Params *url.Values) io.ReadCloser
-}
-
 // Client is a struct that executes methods
 // in the WooCommerceService
 type Client struct {
@@ -44,6 +34,9 @@ type Client struct {
 	BaseURL *url.URL
 
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
+
+	Customers *CustomerService
+	Products  *ProductService
 
 	// ConsumerKey
 	ck string
@@ -78,23 +71,21 @@ type RawOptions struct {
 }
 
 // NewClient returns a new instance of the Client struct
-func NewClient(domainURL, ck, cs string) *Client {
-	domain, err := url.Parse(domainURL)
-	if err != nil {
-		panic(err)
+func NewClient(h *http.Client) *Client {
+	if h == nil {
+		h = http.DefaultClient
 	}
-	domain.Path = "/wp-json/wc/v2/"
-	c := &Client{Client: &http.Client{},
-		Domain: domain, ck: ck, cs: cs,
-	}
+	c := &Client{Client: h, Domain: domain, ck: ck, cs: cs}
+	c.common.client = c
+	c.Customers = (*CustomerService)(&c.common)
+	c.Products = (*ProductService)(&c.common)
 	return c
 }
 
 // NewRequest handles requests
-func (c *Client) NewRequest(method, path string, data interface{}) (*http.Request, error) {
+func (c *Client) NewRequest(method, path string, body interface{}) (*http.Request, error) {
 	signature, p := OAuthSignature(woo.ck, woo.cs, method, Path)
-	// woo.BaseURL.Parse()
-	url, err := parseURL(path, signature, p)
+	url, err := parseURL(path, signature, p) // p.Add(signature)
 	if err != nil {
 		panic(err)
 	}
@@ -118,19 +109,21 @@ func (c *Client) NewRequest(method, path string, data interface{}) (*http.Reques
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Accept", mediaTypeV3)
 	if c.UserAgent != "" {
 		req.Header.Set("User-Agent", c.UserAgent)
 	}
 	return req, nil
 }
 
+// Response wraps a *http.Response object
 type Response struct {
 	*http.Response
+	// Handle pagination
 	NextPage int
 	PrvPage  int
 }
 
+// Do is passed requests from NewRequest and executes it, returning a wrapped *http.Response
 func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 	req = withContext(ctx, req)
 
