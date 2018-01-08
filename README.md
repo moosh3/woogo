@@ -4,7 +4,7 @@
 
 ![Imgur](https://i.imgur.com/5KVjCyft.jpg)
 
-A WooCommerce API in Golang
+A WooCommerce API in Golang. The package documentation can be found on godocs (link above) and the official documentation for the full WooCommerce REST API can be found [here](https://woocommerce.github.io/woocommerce-rest-api-docs/)
 
 ## Usage
 
