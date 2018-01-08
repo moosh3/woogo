@@ -25,15 +25,14 @@ var (
 	WpAPI = true
 )
 
-// Client is a struct that executes methods
-// in the WooCommerceService
+// A Client establishes and interacts with WooCommerce's HTTP API
 type Client struct {
 	// HTTP client used for making requests
 	Client *http.Client
 	// Base WooCommerce URL (your store location)
 	BaseURL *url.URL
 
-	common service // Reuse a single struct instead of allocating one for each service on the heap.
+	common service
 
 	Customers *CustomerService
 	Products  *ProductService
@@ -50,6 +49,7 @@ type Client struct {
 	q string
 }
 
+// service Reuse a single struct instead of allocating one for each service on the heap.
 type service struct {
 	client *Client
 }
@@ -75,7 +75,7 @@ func NewClient(h *http.Client) *Client {
 	if h == nil {
 		h = http.DefaultClient
 	}
-	c := &Client{Client: h, Domain: domain, ck: ck, cs: cs}
+	c := &Client{Client: h}
 	c.common.client = c
 	c.Customers = (*CustomerService)(&c.common)
 	c.Products = (*ProductService)(&c.common)
@@ -84,11 +84,8 @@ func NewClient(h *http.Client) *Client {
 
 // NewRequest handles requests
 func (c *Client) NewRequest(method, path string, body interface{}) (*http.Request, error) {
-	signature, p := OAuthSignature(woo.ck, woo.cs, method, Path)
-	url, err := parseURL(path, signature, p) // p.Add(signature)
-	if err != nil {
-		panic(err)
-	}
+	signature, p := OAuthSignature(c.ck, c.cs, method, path)
+	url := parseURL(path, signature, p) // p.Add(signature)
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -101,16 +98,13 @@ func (c *Client) NewRequest(method, path string, body interface{}) (*http.Reques
 		}
 	}
 
-	req, err := http.NewRequest(method, u.String(), buf)
+	req, err := http.NewRequest(method, url, buf)
 	if err != nil {
 		return nil, err
 	}
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
-	}
-	if c.UserAgent != "" {
-		req.Header.Set("User-Agent", c.UserAgent)
 	}
 	return req, nil
 }
@@ -127,12 +121,14 @@ type Response struct {
 func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
 	req = withContext(ctx, req)
 
-	resp, err := c.client.Do(req)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	response := newResponse(resp)
-	err = CheckResponse(resp)
+	// Wrap *http.Response and return it for validation, etc
+	response := c.newResponse(resp)
+	// Custom validation on a *Response struct
+	err = c.CheckResponse(response)
 	if err != nil {
 		// Return anyway for debugging
 		return response, err
@@ -161,8 +157,17 @@ func (c *Client) newResponse(r *http.Response) *Response {
 }
 
 // CheckResponse is a validator that takes a
-func (c *Client) CheckResponse(r *http.Response) (*Response, err) {
-	return nil, nil
+func (c *Client) CheckResponse(r *Response) error {
+	if r.Body != nil {
+		return nil
+	}
+
+	return nil
+}
+
+// withContext returns a context that can be passed though API calls
+func withContext(ctx context.Context, r *http.Request) *http.Request {
+	return r
 }
 
 // Bool is a helper routine that allocates a new bool value

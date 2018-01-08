@@ -1,5 +1,57 @@
 package woogo
 
+import (
+	"encoding/json"
+	"net/http"
+	"testing"
+
+	"github.com/jarcoal/httpmock"
+)
+
+func TestFetchProducts(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	products := make([]map[string]interface{}, 0)
+
+	// Mock GET request to products
+	httpmock.RegisterResponder("GET", "https://test.com/products.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, products)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+}
+
+func TestPostProduct(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	products := make([]map[string]interface{}, 0)
+
+	// Mock POST request to products
+	httpmock.RegisterResponder("POST", "https://api.mybiz.com/products.json",
+		func(req *http.Request) (*http.Response, error) {
+			product := make(map[string]interface{})
+			if err := json.NewDecoder(req.Body).Decode(&product); err != nil {
+				return httpmock.NewStringResponse(400, ""), nil
+			}
+
+			products = append(products, product)
+
+			resp, err := httpmock.NewJsonResponse(200, product)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+}
+
+/*
 data := []byte{
   ```{
 	  "id": 794,
@@ -126,3 +178,4 @@ data := []byte{
 	}
 ```
 }
+*/

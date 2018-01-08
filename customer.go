@@ -76,15 +76,15 @@ type MetaData struct {
 
 // GetByID returns a Customer in a struct representation via
 // retrieval using the customers ID
-func (cs *CustomerService) GetByID(int id) *Response {
+func (cs *CustomerService) GetByID(ctx context.Context, id int) (*Customer, *Response, error) {
 	c := fmt.Sprintf("customers/%d", id)
-	req, err := ps.client.NewRequest("GET", c, nil)
+	req, err := cs.client.NewRequest("GET", c, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	product := new(Customer)
-	resp, err := ps.client.Do(ctx, req, product)
+	customer := new(Customer)
+	resp, err := cs.client.Do(ctx, req, customer)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -94,21 +94,21 @@ func (cs *CustomerService) GetByID(int id) *Response {
 
 // Get takes a string representation of a customer and retrieves it from
 // WooCommerce, unmarshalling the response into a new Customer struct
-func (cs *CustomerService) Get(ctx context.Context, customer string) *Response {
+func (cs *CustomerService) Get(ctx context.Context, customer string) (*Customer, *Response, error) {
 	var c string
 	if customer != "" {
-		p = fmt.Sprintf("customers/%v", product)
+		c = fmt.Sprintf("customers/%v", customer)
 	} else {
-		p = "customer"
+		c = "customer"
 	}
-	req, err := ps.client.NewRequest("GET", p, nil)
+	req, err := cs.client.NewRequest("GET", c, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Create an empty Customer struct to unmarshall into
 	cResp := new(Customer)
-	resp, err := ps.client.Do(ctx, req, cResp)
+	resp, err := cs.client.Do(ctx, req, cResp)
 	if err != nil {
 		return nil, resp, err
 	}
